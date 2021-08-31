@@ -1,0 +1,76 @@
+terraform {
+  source = local.tf-module
+}
+
+inputs = {
+  role_name = local.tg_dir_name
+  role_description = local.role_description
+
+  assume_role_policy = local.trust_policy
+  inline_policies_to_create = local.policy_map
+
+  tags = local.tags
+
+  permission_boundary = local.permission_boundary
+}
+
+locals {
+  common_dir = abspath(join("/", concat(list(get_parent_terragrunt_dir()), slice(split("/", path_relative_to_include()), 0, 3))))
+  provider_yaml_file = "${local.common_dir}/provider.yaml"
+  provider_data      = fileexists(local.provider_yaml_file) ? file(local.provider_yaml_file) : yamlencode({})
+  provider_config    = lookup(yamldecode(local.provider_data), "provider_config", [])
+  account_id = lookup(yamldecode(local.provider_data), "account_id", [])
+  session_name       = substr(join("-", list("mercy", replace(path_relative_to_include(), "/", "-"))), -64, 64)
+
+  tg_dir_name = basename(abspath(get_terragrunt_dir()))
+
+  iam_policy_details = lookup(yamldecode(file("./global.yaml")), local.tg_dir_name, {})
+  role_description = lookup(local.iam_policy_details, "role-description", {})
+
+  tags = merge(lookup(local.iam_policy_details, "role-tags", {}), lookup(yamldecode(local.provider_data), "tags"), {})
+  is_iam_role = length(local.role_description)
+  permission_boundary = local.is_iam_role == 0 ? "" : "arn:aws:iam::${local.account_id}:policy/cdl/boundaries/${lookup(local.iam_policy_details, "role-boundary")}"
+
+  iam_policies = lookup(local.iam_policy_details, "role-iam-policies", {})
+  trust_policy = lookup(local.iam_policy_details, "role-trust-policy", {})
+  policies_to_attach = lookup(local.iam_policy_details, "role-policies-to-attach", {})
+
+  tf-module = lookup(local.iam_policy_details, "tf-source-module", "git::https://gitlab.com/cheshire-datasystems/platform-team/shared-terraform-modules/terraform-aws-iam.git?ref=v1.2.1")
+
+  policy_map = {for k, v in local.iam_policies : k => jsonencode(v)}
+
+}
+
+generate "provider" {
+  path      = lookup(yamldecode(local.provider_data), local.tg_dir_name, "provider.tf")
+  if_exists = "overwrite"
+  contents  = <<EOT
+
+%{ for provider in local.provider_config ~}
+provider "aws" {
+  region = "${provider.region}"
+  assume_role {
+    role_arn     = "${provider.role_arn}"
+    session_name = "${local.session_name}"
+  }
+  %{if lookup(provider, "alias", null) != null }alias = "${provider.alias}" %{ endif }
+}
+%{ endfor ~}
+
+terraform {
+    backend "s3" {
+    }
+}
+EOT
+}
+
+remote_state {
+  backend = "s3"
+  config = {
+    encrypt = true
+    bucket  = "cdlsoftware.terraform.auth"
+    key     = "Acme/${path_relative_to_include()}.tfstate"
+    region  = "eu-west-1"
+    role_arn = "arn:aws:iam::190708175796:role/cdl/cloudteam/atlantis-s3-state-role"
+  }
+}

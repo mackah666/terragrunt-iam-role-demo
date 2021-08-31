@@ -1,0 +1,9 @@
+provider_config:
+  provider_1:
+    region: "eu-west-1"
+    role_arn: "arn:aws:iam::116147290797:role/cdl/Acme-IAMRole"
+
+account_id: "116147290797"
+
+tags:
+  Environment: "Dev"

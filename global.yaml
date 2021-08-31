@@ -1,0 +1,519 @@
+policy-defaults: &policy-defaults
+  Version: "2012-10-17"
+
+trust-defaults: &trust-defaults
+  Principal:
+    AWS:
+      - "arn:aws:iam::190708175796:root"
+      - "arn:aws:iam::693706713868:root"
+  Sid: "DefaultTrust"
+  Effect: "Allow"
+  Action: "sts:AssumeRole"
+
+boundary:
+  - &compute-boundary "Acme-Compute-Boundary"
+  - &serverless-boundary "Acme-Serverless-Boundary"
+
+iam-defaults: &iam-policy-defaults
+  Sid: "IAMPolicyDefaults"
+  Effect: "Allow"
+  Action:
+    - "ec2:*"
+  Resource:
+    - "*"
+
+tag-defaults: &tag-defaults
+  Team: "Acme"
+  Contact: "Acme@cdl.co.uk"
+  Project: "Acme-Mercy"
+  Owner: "Acme"
+  Client: "CDL"
+  TeamPath: "Acme"
+
+s3-policy: &s3-policy
+  <<: *iam-policy-defaults
+  Sid: "S3AccessPolicy"
+  Effect: "Allow"
+  Action:
+    - "s3:*"
+  Resource:
+    - "*"
+#    - "*/*"
+#    - "*/*/*"
+
+ecs-access-role-policy: &ecs-policy
+  <<: *iam-policy-defaults
+  Sid: "ECSAccessPolicy"
+  Effect: "Allow"
+  Action:
+    - "ecs:*"
+
+autoscaling-access-role-policy: &autoscaling-policy
+  <<: *iam-policy-defaults
+  Sid: "AutoscalingAccessPolicy"
+  Effect: "Allow"
+  Action:
+    - "autoscaling:*"
+    - "application-autoscaling:*"
+
+ecr-access-role-policy: &ecr-policy
+  <<: *iam-policy-defaults
+  Sid: "EcrAccessPolicy"
+  Effect: "Allow"
+  Action:
+    - "ecr:*"
+
+cognito-access-role-policy: &cognito-policy
+  <<: *iam-policy-defaults
+  Sid: "CognitoAccessPolicy"
+  Effect: "Allow"
+  Action:
+    - "cognito-idp:*"
+    - "cognito-identity:*"
+
+ssm-access-role-policy: &ssm-policy
+  <<: *iam-policy-defaults
+  Sid: "SSMAccessPolicy"
+  Effect: "Allow"
+  Action:
+    - "ssm:List*"
+    - "ssm:Get*"
+    - "ssm:Describe*"
+    - "ssm:Add*"
+    - "ssm:Put*"
+
+kms-access-role-policy: &kms-policy
+  <<: *iam-policy-defaults
+  Sid: "KMSAccessPolicy"
+  Effect: "Allow"
+  Action:
+    - "kms:*"
+
+iam-access-role-policy: &iam-policy
+  <<: *iam-policy-defaults
+  Sid: "IAMAccessPolicy"
+  Effect: "Allow"
+  Action:
+    - "iam:*"
+
+lambda-access-role-policy: &lambda-policy
+  <<: *iam-policy-defaults
+  Sid: "LambdaAccessPolicy"
+  Effect: "Allow"
+  Action:
+    - "lambda:*"
+
+codedeploy-access-role-policy: &codedeploy-policy
+  <<: *iam-policy-defaults
+  Sid: "CodedeployAccessPolicy"
+  Effect: "Allow"
+  Action:
+    - "codedeploy:*"
+
+codepipeline-access-role-policy: &codepipeline-policy
+  <<: *iam-policy-defaults
+  Sid: "CodepipelineAccessPolicy"
+  Effect: "Allow"
+  Action:
+    - "codepipeline:*"
+
+codebuild-access-role-policy: &codebuild-policy
+  <<: *iam-policy-defaults
+  Sid: "CodebuildAccessPolicy"
+  Effect: "Allow"
+  Action:
+    - "codebuild:*"
+
+codecommit-access-role-policy: &codecommit-policy
+  <<: *iam-policy-defaults
+  Sid: "CodecommitAccessPolicy"
+  Effect: "Allow"
+  Action:
+    - "codecommit:*"
+
+notifications-access-role-policy: &notifications-policy
+  <<: *iam-policy-defaults
+  Sid: "NotificationsAccessPolicy"
+  Effect: "Allow"
+  Action:
+    - "sqs:*"
+    - "ses:*"
+    - "sns:*"
+
+events-access-role-policy: &events-policy
+  <<: *iam-policy-defaults
+  Sid: "EventsAccessPolicy"
+  Effect: "Allow"
+  Action:
+    - "events:*"
+
+logs-access-role-policy: &logs-policy
+  <<: *iam-policy-defaults
+  Sid: "LogsAccessPolicy"
+  Effect: "Allow"
+  Action:
+    - "logs:*"
+    - "cloudwatch:*"
+
+ec2-access-role-policy: &ec2-policy
+  <<: *iam-policy-defaults
+
+elb-access-role-policy: &elb-policy
+  <<: *iam-policy-defaults
+  Sid: "ELBAccessPolicy"
+  Action:
+    - "elasticloadbalancing:*"
+
+dynamodb-access-role-policy: &dynamodb-policy
+  <<: *iam-policy-defaults
+  Sid: "DynamoDBAccessPolicy"
+  Action:
+    - "dynamodb:*"
+
+cloudfront-access-role-policy: &cloudfront-policy
+  <<: *iam-policy-defaults
+  Sid: "CloudfrontAccessPolicy"
+  Action:
+    - "cloudfront:*"
+
+Acme-BuilderRole:
+  role-iam-policies:
+    builder-access-policy:
+      <<: *policy-defaults
+      Statement:
+        - <<: *ecs-policy
+        - <<: *cloudfront-policy
+        - <<: *ssm-policy
+        - <<: *autoscaling-policy
+        - <<: *logs-policy
+        - <<: *codecommit-policy
+        - <<: *notifications-policy
+        - <<: *s3-policy
+        - <<: *lambda-policy
+        - <<: *dynamodb-policy
+        - <<: *events-policy
+        - <<: *ecr-policy
+        - <<: *cognito-policy
+        - <<: *iam-policy
+        - <<: *ec2-policy
+        - <<: *kms-policy
+        - <<: *codepipeline-policy
+        - <<: *codebuild-policy
+        - <<: *codedeploy-policy
+        - <<: *elb-policy
+  role-trust-policy:
+    <<: *policy-defaults
+    Statement:
+      <<: *trust-defaults
+      Sid: "TrustPolicy"
+      Principal:
+        AWS:
+          - "arn:aws:iam::190708175796:root"
+          - "arn:aws:iam::693706713868:root"
+        Service:
+          - "lambda.amazonaws.com"
+          - "ecs-tasks.amazonaws.com"
+          - "ec2.amazonaws.com"
+  tf-source-module: "git::https://gitlab.com/cheshire-datasystems/platform-team/shared-terraform-modules/terraform-aws-iam.git?ref=v1.2.1"
+  role-description: "Acme Builder Role for compute actions"
+  role-tags:
+    <<: *tag-defaults
+  role-boundary: *compute-boundary
+  role-policies-to-attach:
+    - cdl-s3-default-kms-access-policy
+
+Acme-BuildRole:
+  role-iam-policies:
+    builder-access-policy:
+      <<: *policy-defaults
+      Statement:
+        - <<: *ecs-policy
+        - <<: *autoscaling-policy
+        - <<: *cognito-policy
+        - <<: *ssm-policy
+        - <<: *cloudfront-policy
+        - <<: *ec2-policy
+        - <<: *logs-policy
+        - <<: *lambda-policy
+        - <<: *s3-policy
+        - <<: *events-policy
+        - <<: *kms-policy
+        - <<: *notifications-policy
+  role-trust-policy:
+    <<: *policy-defaults
+    Statement:
+      <<: *trust-defaults
+      Sid: "TrustPolicy"
+      Principal:
+        AWS:
+          - "arn:aws:iam::190708175796:root"
+          - "arn:aws:iam::693706713868:root"
+        Service:
+          - "lambda.amazonaws.com"
+          - "ecs-tasks.amazonaws.com"
+          - "ec2.amazonaws.com"
+  tf-source-module: "git::https://gitlab.com/cheshire-datasystems/platform-team/shared-terraform-modules/terraform-aws-iam.git?ref=v1.2.1"
+  role-description: "Acme Build Role for serverless actions"
+  role-tags:
+    <<: *tag-defaults
+  role-boundary: *serverless-boundary
+
+Acme-CloudWatchRole:
+  role-iam-policies:
+    builder-access-policy:
+      <<: *policy-defaults
+      Statement:
+        - <<: *logs-policy
+        - <<: *codepipeline-policy
+        - <<: *s3-policy
+  role-trust-policy:
+    <<: *policy-defaults
+    Statement:
+      <<: *trust-defaults
+      Sid: "TrustPolicy"
+      Principal:
+        Service:
+          - "events.amazonaws.com"
+  tf-source-module: "git::https://gitlab.com/cheshire-datasystems/platform-team/shared-terraform-modules/terraform-aws-iam.git?ref=v1.2.1"
+  role-description: "Acme Cloudwatch Role for logging & monitoring"
+  role-tags:
+    <<: *tag-defaults
+  role-boundary: *serverless-boundary
+
+Acme-AutoScalingRole:
+  role-iam-policies:
+    builder-access-policy:
+      <<: *policy-defaults
+      Statement:
+        - <<: *ecs-policy
+        - <<: *autoscaling-policy
+        - <<: *logs-policy
+  role-trust-policy:
+    <<: *policy-defaults
+    Statement:
+      <<: *trust-defaults
+      Sid: "TrustPolicy"
+      Principal:
+        Service:
+          - "ec2.amazonaws.com"
+          - "ecs-tasks.amazonaws.com"
+          - "lambda.amazonaws.com"
+  tf-source-module: "git::https://gitlab.com/cheshire-datasystems/platform-team/shared-terraform-modules/terraform-aws-iam.git?ref=v1.2.1"
+  role-description: "Acme Autoscaling Role"
+  role-tags:
+    <<: *tag-defaults
+  role-boundary: *compute-boundary
+
+Acme-CodeBuild:
+  role-iam-policies:
+    builder-access-policy:
+      <<: *policy-defaults
+      Statement:
+        - <<: *ec2-policy
+        - <<: *s3-policy
+        - <<: *ssm-policy
+        - <<: *kms-policy
+        - <<: *cognito-policy
+        - <<: *logs-policy
+        - <<: *codedeploy-policy
+        - <<: *codebuild-policy
+  role-trust-policy:
+    <<: *policy-defaults
+    Statement:
+      <<: *trust-defaults
+      Sid: "TrustPolicy"
+      Principal:
+        Service:
+          - "codebuild.amazonaws.com"
+  tf-source-module: "git::https://gitlab.com/cheshire-datasystems/platform-team/shared-terraform-modules/terraform-aws-iam.git?ref=v1.2.1"
+  role-description: "Acme CodeBuild Role"
+  role-tags:
+    <<: *tag-defaults
+  role-boundary: *compute-boundary
+
+Acme-CodeDeploy:
+  role-iam-policies:
+    builder-access-policy:
+      <<: *policy-defaults
+      Statement:
+        - <<: *ecs-policy
+        - <<: *elb-policy
+        - <<: *lambda-policy
+        - <<: *codedeploy-policy
+        - <<: *logs-policy
+        - <<: *cognito-policy
+        - <<: *kms-policy
+        - <<: *notifications-policy
+        - <<: *s3-policy
+        - <<: *iam-policy
+  role-trust-policy:
+    <<: *policy-defaults
+    Statement:
+      <<: *trust-defaults
+      Sid: "TrustPolicy"
+      Principal:
+        Service:
+          - "codedeploy.amazonaws.com"
+          - "codepipeline.amazonaws.com"
+  tf-source-module: "git::https://gitlab.com/cheshire-datasystems/platform-team/shared-terraform-modules/terraform-aws-iam.git?ref=v1.2.1"
+  role-description: "Acme CodeDeploy Role"
+  role-tags:
+    <<: *tag-defaults
+  role-boundary: *compute-boundary
+
+Acme-CodePipe:
+  role-iam-policies:
+    builder-access-policy:
+      <<: *policy-defaults
+      Statement:
+        - <<: *ec2-policy
+        - <<: *s3-policy
+        - <<: *ssm-policy
+        - <<: *logs-policy
+        - <<: *kms-policy
+        - <<: *ecr-policy
+        - <<: *ecs-policy
+        - <<: *iam-policy
+        - <<: *codepipeline-policy
+        - <<: *codebuild-policy
+        - <<: *codecommit-policy
+        - <<: *codedeploy-policy
+        - <<: *cognito-policy
+        - <<: *notifications-policy
+  role-trust-policy:
+    <<: *policy-defaults
+    Statement:
+      <<: *trust-defaults
+      Sid: "TrustPolicy"
+      Principal:
+        Service:
+          - "codepipeline.amazonaws.com"
+  tf-source-module: "git::https://gitlab.com/cheshire-datasystems/platform-team/shared-terraform-modules/terraform-aws-iam.git?ref=v1.2.1"
+  role-description: "Acme CodeDeploy Role"
+  role-tags:
+    <<: *tag-defaults
+  role-boundary: *compute-boundary
+
+Acme-LambdaRole:
+  role-iam-policies:
+    builder-access-policy:
+      <<: *policy-defaults
+      Statement:
+        - <<: *lambda-policy
+        - <<: *autoscaling-policy
+        - <<: *cognito-policy
+        - <<: *ecs-policy
+        - <<: *elb-policy
+        - <<: *s3-policy
+        - <<: *iam-policy
+          Action:
+            - "iam:PassRole"
+        - <<: *codecommit-policy
+        - <<: *codepipeline-policy
+        - <<: *kms-policy
+        - <<: *notifications-policy
+        - <<: *ssm-policy
+  role-trust-policy:
+    <<: *policy-defaults
+    Statement:
+      <<: *trust-defaults
+      Sid: "TrustPolicy"
+      Principal:
+        Service:
+          - "lambda.amazonaws.com"
+  tf-source-module: "git::https://gitlab.com/cheshire-datasystems/platform-team/shared-terraform-modules/terraform-aws-iam.git?ref=v1.2.1"
+  role-description: "Acme Lambda Role for serverless actions"
+  role-tags:
+    <<: *tag-defaults
+  role-boundary: *serverless-boundary
+
+Acme-LambdaASGRole:
+  role-iam-policies:
+    builder-access-policy:
+      <<: *policy-defaults
+      Statement:
+        - <<: *autoscaling-policy
+        - <<: *cognito-policy
+        - <<: *ecs-policy
+        - <<: *logs-policy
+        - <<: *elb-policy
+        - <<: *s3-policy
+        - <<: *ec2-policy
+        - <<: *iam-policy
+          Action:
+            - "iam:PassRole"
+        - <<: *codecommit-policy
+        - <<: *codepipeline-policy
+        - <<: *kms-policy
+        - <<: *lambda-policy
+        - <<: *notifications-policy
+        - <<: *ssm-policy
+  role-trust-policy:
+    <<: *policy-defaults
+    Statement:
+      <<: *trust-defaults
+      Sid: "TrustPolicy"
+      Principal:
+        Service:
+          - "lambda.amazonaws.com"
+  tf-source-module: "git::https://gitlab.com/cheshire-datasystems/platform-team/shared-terraform-modules/terraform-aws-iam.git?ref=v1.2.1"
+  role-description: "Acme Lambda Role for serverless actions"
+  role-tags:
+    <<: *tag-defaults
+  role-boundary: *compute-boundary
+
+Acme-TaskRole:
+  role-iam-policies:
+    builder-access-policy:
+      <<: *policy-defaults
+      Statement:
+        - <<: *elb-policy
+        - <<: *ecs-policy
+        - <<: *ec2-policy
+        - <<: *kms-policy
+        - <<: *dynamodb-policy
+  role-trust-policy:
+    <<: *policy-defaults
+    Statement:
+      <<: *trust-defaults
+      Sid: "TrustPolicy"
+      Principal:
+        Service:
+          - "ecs-tasks.amazonaws.com"
+          - "application-autoscaling.amazonaws.com"
+  tf-source-module: "git::https://gitlab.com/cheshire-datasystems/platform-team/shared-terraform-modules/terraform-aws-iam.git?ref=v1.2.1"
+  role-description: "Acme Task Role"
+  role-tags:
+    <<: *tag-defaults
+  role-boundary: *serverless-boundary
+
+Acme-ECSExecRole:
+  role-iam-policies:
+    builder-access-policy:
+      <<: *policy-defaults
+      Statement:
+        - <<: *ssm-policy
+        - <<: *kms-policy
+        - <<: *ecr-policy
+        - <<: *ecs-policy
+        - <<: *logs-policy
+        - <<: *elb-policy
+        - <<: *lambda-policy
+        - <<: *notifications-policy
+        - <<: *dynamodb-policy
+        - <<: *s3-policy
+        - <<: *iam-policy
+  role-trust-policy:
+    <<: *policy-defaults
+    Statement:
+      <<: *trust-defaults
+      Sid: "TrustPolicy"
+      Principal:
+        Service:
+          - "ecs-tasks.amazonaws.com"
+          - "application-autoscaling.amazonaws.com"
+  tf-source-module: "git::https://gitlab.com/cheshire-datasystems/platform-team/shared-terraform-modules/terraform-aws-iam.git?ref=v1.2.1"
+  role-description: "Acme Lambda Role for serverless actions"
+  role-tags:
+    <<: *tag-defaults
+  role-boundary: *compute-boundary
